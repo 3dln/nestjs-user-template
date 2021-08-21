@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Session,
 } from '@nestjs/common';
 import { CreateUserDto } from './dtos/cerate-user.dto';
 import { UsersService } from './users.service';
@@ -22,14 +23,28 @@ export class UsersController {
     private authService: AuthService
   ) {}
 
+  @Get('/me')
+  getCurrentUser(@Session() session: any) {
+    return this.usersService.findOne(session.userId);
+  }
+
   @Post('/signup')
-  createUser(@Body() body: CreateUserDto) {
-    return this.authService.handleSignup(body.email, body.password);
+  async createUser(@Body() body: CreateUserDto, @Session() session: any) {
+    const user = await this.authService.handleSignup(body.email, body.password);
+    session.userId = user.id;
+    return user;
   }
 
   @Post('/signin')
-  signin(@Body() body: CreateUserDto) {
-    return this.authService.handleSignin(body.email, body.password);
+  async signin(@Body() body: CreateUserDto, @Session() session: any) {
+    const user = await this.authService.handleSignin(body.email, body.password);
+    session.userId = user.id;
+    return user;
+  }
+
+  @Post('/signout')
+  signOut(@Session() session: any) {
+    session.userId = null;
   }
 
   @Get('/:id')
